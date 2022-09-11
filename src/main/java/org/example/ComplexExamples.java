@@ -1,6 +1,9 @@
 package org.example;
 
 import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class ComplexExamples {
 
@@ -36,7 +39,7 @@ public class ComplexExamples {
     }
 
     private static Person[] RAW_DATA = new Person[]{
-            new Person(0, "Harry"),
+            new Person(0, null),
             new Person(0, "Harry"), // дубликат
             new Person(1, "Harry"), // тёзка
             new Person(2, "Harry"),
@@ -137,17 +140,16 @@ public class ComplexExamples {
     }
 
     private static void task1() {
-        final List<Person> personListWithUniqueId = Arrays.stream(RAW_DATA)
+        Arrays.stream(RAW_DATA)
+                .filter(person -> Objects.nonNull(person.getName()))
                 .distinct()
-                .sorted(Comparator.comparing(Person::getName))
-                .toList();
-
-        Map<String, Integer> resultMap = new HashMap<>();
-        for (Person person : personListWithUniqueId) {
-            Integer orDefault = resultMap.getOrDefault(person.getName(), 0);
-            resultMap.put(person.getName(), ++orDefault);
-        }
-        System.out.println(resultMap + "\n");
+                .sorted(Comparator.comparing(Person::getId))
+                .collect(Collectors.groupingBy(Person::getName))
+                .forEach((k, v) -> {
+                    System.out.println("Key: " + k);
+                    System.out.println("Value: " + v.size());
+                });
+        System.out.println();
     }
 
     private static void task2() {
@@ -168,32 +170,26 @@ public class ComplexExamples {
     }
 
     private static void task3() {
-        System.out.println(fuzzySearch("car", "ca6$$#_rtwheel"));
-        System.out.println(fuzzySearch("cwhl", "cartwheel"));
-        System.out.println(fuzzySearch("cwhee", "cartwheel"));
-        System.out.println(fuzzySearch("cartwheel", "cartwheel"));
-        System.out.println(fuzzySearch("cwheeel", "cartwheel"));
-        System.out.println(fuzzySearch("lw", "cartwheel"));
+        fuzzySearch("car", "ca6$$#_rtwheel");
+        fuzzySearch("cwhl", "cartwheel");
+        fuzzySearch("cwhee", "cartwheel");
+        fuzzySearch("cartwheel", "cartwheel");
+        fuzzySearch("cwheeel", "cartwheel");
+        fuzzySearch("lw", "cartwheel");
     }
 
-    private static boolean fuzzySearch(String pat, String text) {
-        for (int j = 0, i = 0; j < pat.length() && i < text.length(); ) {
-            if (pat.charAt(j) == text.charAt(i)) {
-                j++;
-                i++;
-                if (j == pat.length()) {
-                    return true;
-                }
-            } else {
-                while (pat.charAt(j) != text.charAt(i)) {
-                    i++;
-                    if (i == text.length()) {
-                        return false;
-                    }
-                }
-            }
-        }
-        return false;
+    private static void fuzzySearch(String pat, String text) {
+        ArrayList<Character> pats = new ArrayList<>(
+                pat.chars().mapToObj(ch -> (char) ch).toList());
+
+        ArrayList<Character> texts = new ArrayList<>(
+                text.chars().mapToObj(ch -> (char) ch).toList());
+
+        final List<Character> matchesWithPats = texts.stream()
+                .filter(pats::contains)
+                .toList();
+
+        System.out.println(matchesWithPats.equals(pats));
     }
 }
 
